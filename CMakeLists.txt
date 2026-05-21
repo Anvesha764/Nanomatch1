@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(nanomatch CXX)
+find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,3 +31,11 @@ add_executable(nanomatch_v3
 add_executable(generate_itch
     src/generate_itch.cpp
 )
+
+# Phase 4 — SPSC ring buffer + trade logger
+add_executable(nanomatch_v4
+    src/main_v4.cpp
+    src/order_book_v2.cpp
+    src/itch_parser.cpp
+)
+target_link_libraries(nanomatch_v4 Threads::Threads)
