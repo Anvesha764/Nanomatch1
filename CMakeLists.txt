@@ -18,3 +18,15 @@ add_executable(nanomatch_v2
     src/main_v2.cpp
     src/order_book_v2.cpp
 )
+
+# Phase 3 — ITCH parser + data ingestion
+add_executable(nanomatch_v3
+    src/main_v3.cpp
+    src/order_book_v2.cpp
+    src/itch_parser.cpp
+)
+
+# Synthetic data generator
+add_executable(generate_itch
+    src/generate_itch.cpp
+)
