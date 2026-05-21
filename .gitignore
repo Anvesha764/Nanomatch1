@@ -1,0 +1,15 @@
+build/
+*.exe
+*.o
+*.a
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+.vscode/
+*.csv
+perf.data
+flamegraph.svg
+data/*.itch
+data/*.bin
+data/*.gz
