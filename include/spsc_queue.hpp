@@ -1,4 +1,3 @@
-// include/spsc_queue.hpp
 #pragma once
 #include <atomic>
 #include <array>
@@ -13,7 +12,6 @@ class SPSCQueue {
 public:
     SPSCQueue() : head_(0), tail_(0) {}
 
-    // Producer thread only
     bool push(const T& item) noexcept {
         const std::size_t tail     = tail_.load(std::memory_order_relaxed);
         const std::size_t next_tail = (tail + 1) & MASK;
@@ -26,12 +24,11 @@ public:
         return true;
     }
 
-    // Consumer thread only
     std::optional<T> pop() noexcept {
         const std::size_t head = head_.load(std::memory_order_relaxed);
 
         if (head == tail_.load(std::memory_order_acquire))
-            return std::nullopt;  // empty
+            return std::nullopt;
 
         T item = data_[head];
         head_.store((head + 1) & MASK, std::memory_order_release);

@@ -1,4 +1,3 @@
-// include/itch_parser.hpp
 #pragma once
 #include "types.hpp"
 #include "order.hpp"
@@ -7,7 +6,7 @@
 #include <functional>
 #include <string>
 
-// ── Byte-swap helpers ─────────────────────────────────────────────────
+
 inline uint16_t bswap16(uint16_t v) { return (v >> 8) | (v << 8); }
 inline uint32_t bswap32(uint32_t v) {
     return ((v & 0xFF000000) >> 24) | ((v & 0x00FF0000) >> 8)  |
@@ -24,14 +23,12 @@ inline uint64_t bswap64(uint64_t v) {
            ((v & 0x00000000000000FFULL) << 56);
 }
 
-// 6-byte big-endian timestamp
 inline uint64_t read_ts6(const uint8_t* b) {
     return ((uint64_t)b[0] << 40) | ((uint64_t)b[1] << 32) |
            ((uint64_t)b[2] << 24) | ((uint64_t)b[3] << 16) |
            ((uint64_t)b[4] <<  8) |  (uint64_t)b[5];
 }
 
-// ── ITCH 5.0 packed message structs ───────────────────────────────────
 #pragma pack(push, 1)
 
 struct itch_add_order {
@@ -66,7 +63,6 @@ struct itch_execute_order {
 
 #pragma pack(pop)
 
-// ── Parsed event types ─────────────────────────────────────────────────
 struct AddOrderEvent {
     OrderId   order_id;
     Price     price;
@@ -87,14 +83,12 @@ struct ExecuteOrderEvent {
     Timestamp timestamp;
 };
 
-// ── Callbacks ──────────────────────────────────────────────────────────
 struct ITCHCallbacks {
     std::function<void(const AddOrderEvent&)>     on_add;
     std::function<void(const CancelOrderEvent&)>  on_cancel;
     std::function<void(const ExecuteOrderEvent&)> on_execute;
 };
 
-// Parser function — declared here, defined in itch_parser.cpp
 uint64_t parse_itch_file(const std::string& path,
                          const ITCHCallbacks& cb,
                          const std::string& filter_stock = "");

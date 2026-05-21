@@ -1,4 +1,3 @@
-// bench/latency_histogram.cpp
 #include "order_book_v2.hpp"
 #include <algorithm>
 #include <chrono>
@@ -8,7 +7,7 @@
 #include <random>
 
 using Clock = std::chrono::high_resolution_clock;
-using ns    = std::chrono::nanoseconds;
+using ns = std::chrono::nanoseconds;
 
 int main() {
     const int WARMUP  = 10000;
@@ -19,22 +18,15 @@ int main() {
     uint64_t next_id = 1;
     Price base = 1000000;
 
-    // Seed book with resting orders
     for (int i = 0; i < 500; ++i) {
-        book.add_order({next_id++, base - 1000*(i%10), 100,
-                        Side::BUY,  (Timestamp)next_id});
-        book.add_order({next_id++, base + 1000*(i%10), 100,
-                        Side::SELL, (Timestamp)next_id});
+        book.add_order({next_id++, base - 1000*(i%10), 100, Side::BUY,  (Timestamp)next_id});
+        book.add_order({next_id++, base + 1000*(i%10), 100, Side::SELL, (Timestamp)next_id});
     }
-
-    // Warmup — not recorded
     for (int i = 0; i < WARMUP; ++i) {
         Price px = base + (int64_t)(rng() % 2001) - 1000;
-        book.add_order({next_id++, px, 100,
-                        Side::BUY, (Timestamp)next_id});
+        book.add_order({next_id++, px, 100, Side::BUY, (Timestamp)next_id});
     }
 
-    // Measure
     std::vector<int64_t> latencies;
     latencies.reserve(SAMPLES);
 
@@ -70,7 +62,6 @@ int main() {
     std::cout << "║  Max     : " << std::setw(7)  << pct(100)    << " ns         ║\n";
     std::cout << "╚══════════════════════════════════╝\n";
 
-    // ASCII histogram
     std::cout << "\nLatency Distribution:\n";
     struct Bucket { const char* label; int64_t limit; };
     Bucket buckets[] = {

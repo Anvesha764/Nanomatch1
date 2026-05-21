@@ -1,4 +1,3 @@
-// src/main_v2.cpp
 #include "order_book_v2.hpp"
 #include <iostream>
 #include <chrono>
@@ -7,7 +6,6 @@ int main() {
     OrderBook_v2 book;
     uint64_t ts = 0;
 
-    // seed the book — same as v1
     book.add_order({1, 10050, 100, Side::BUY,  ++ts});
     book.add_order({2, 10040, 200, Side::BUY,  ++ts});
     book.add_order({3, 10060, 150, Side::SELL, ++ts});
@@ -25,8 +23,6 @@ int main() {
                   << " qty=" << t.quantity << "\n";
 
     book.print_book();
-
-    // ── Benchmark: 100k orders, measure time ──────────────────
     std::cout << "\n>> Benchmarking 100,000 orders...\n";
 
     OrderBook_v2 bench_book;

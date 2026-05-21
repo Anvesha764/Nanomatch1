@@ -1,4 +1,3 @@
-// src/itch_parser.cpp
 #include "itch_parser.hpp"
 #include <iostream>
 #include <cstring>
@@ -7,7 +6,6 @@
 uint64_t parse_itch_file(const std::string& path,
                          const ITCHCallbacks& cb,
                          const std::string& filter_stock) {
-    // Windows-compatible: use fread instead of mmap
     FILE* f = fopen(path.c_str(), "rb");
     if (!f) {
         std::cerr << "Cannot open: " << path << "\n";
@@ -16,7 +14,7 @@ uint64_t parse_itch_file(const std::string& path,
 
     uint64_t msg_count = 0;
     uint8_t  len_buf[2];
-    uint8_t  msg_buf[1024];  // max ITCH message is ~50 bytes
+    uint8_t  msg_buf[1024];
 
     while (fread(len_buf, 1, 2, f) == 2) {
         uint16_t msg_len = bswap16(

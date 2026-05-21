@@ -1,4 +1,3 @@
-// include/order.hpp
 #pragma once
 #include "types.hpp"
 
@@ -10,10 +9,8 @@ struct Order {
     Side      side     = Side::BUY;
     Timestamp timestamp = 0;
 
-    // Default constructor (needed by std::array)
     Order() = default;
 
-    // Parameterized constructor
     Order(OrderId id, Price px, Quantity qty, Side s, Timestamp ts)
         : id(id), price(px), quantity(qty), filled_qty(0),
           side(s), timestamp(ts) {}

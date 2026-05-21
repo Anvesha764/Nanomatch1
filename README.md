@@ -41,24 +41,24 @@ NanoMatch builds this from scratch with HFT-grade systems engineering:
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        MATCHING THREAD                        │
-│                                                              │
-│   ┌─────────────┐    ┌──────────────┐    ┌───────────────┐  │
-│   │ ITCH Parser │───▶│  Order Book  │───▶│ Trade Events  │  │
+|-------------------------------------------------------------|
+│                        MATCHING THREAD                      │
+│                                                             │
+│   |-------------|    |--------------|    |---------------|  │
+│   │ ITCH Parser │--->│  Order Book  │--->│ Trade Events  │  │
 │   │ (fread I/O) │    │ (pool alloc) │    │               │  │
-│   └─────────────┘    └──────────────┘    └───────┬───────┘  │
-│                                                  │           │
-│                                                  ▼           │
-│                                       ┌─────────────────┐   │
-│                                       │ SPSC Ring Buffer │   │
-│                                       └────────┬────────┘   │
-└────────────────────────────────────────────────┼────────────┘
+│   |-------------|    |--------------|    |-------┬-------|  │
+│                                                  │          │
+│                                                  |          │
+│                                       |-----------------|   │
+│                                       │ SPSC Ring Buffer│   │
+│                                       |--------┬--------|   │
+|------------------------------------------------┼------------|
                                                  │
-┌────────────────────────────────────────────────▼────────────┐
+|--------------------------------------------------------------|
 │                        LOGGER THREAD                         │
 │                    trades.csv output                         │
-└──────────────────────────────────────────────────────────────┘
+|--------------------------------------------------------------|
 ```
 
 The matching thread never touches I/O - it only pushes `TradeEvent` structs onto the ring buffer. The logger thread drains it asynchronously.
@@ -84,39 +84,39 @@ The matching thread never touches I/O - it only pushes `TradeEvent` structs onto
 ```
 nanomatch/
 │
-├── CMakeLists.txt              # Build configuration - 5 executables
-├── README.md                   # This file
-├── .gitignore                  # Excludes build/, binaries, data files
+|-- CMakeLists.txt              # Build configuration - 5 executables
+|-- README.md                   # This file
+|-- .gitignore                  # Excludes build/, binaries, data files
 │
-├── include/                    # All header files
-│   ├── types.hpp               # OrderId, Price, Quantity, Side
-│   ├── order.hpp               # Order struct with default constructor
-│   ├── order_book.hpp          # Phase 1 - STL baseline LOB
-│   ├── order_book_v1.hpp       # Phase 1 copy (for comparison)
-│   ├── order_book_v2.hpp       # Phase 2 - optimized LOB
-│   ├── pool_allocator.hpp      # STL-compatible pool allocator
-│   ├── price_level.hpp         # Fixed circular buffer per price level
-│   ├── itch_parser.hpp         # ITCH 5.0 message structs + callbacks
-│   ├── spsc_queue.hpp          # Lock-free ring buffer
-│   └── trade_logger.hpp        # Trade logger (CSV output)
+|-- include/                    # All header files
+│   |-- types.hpp               # OrderId, Price, Quantity, Side
+│   |-- order.hpp               # Order struct with default constructor
+│   |-- order_book.hpp          # Phase 1 - STL baseline LOB
+│   |-- order_book_v1.hpp       # Phase 1 copy (for comparison)
+│   |-- order_book_v2.hpp       # Phase 2 - optimized LOB
+│   |-- pool_allocator.hpp      # STL-compatible pool allocator
+│   |-- price_level.hpp         # Fixed circular buffer per price level
+│   |-- itch_parser.hpp         # ITCH 5.0 message structs + callbacks
+│   |-- spsc_queue.hpp          # Lock-free ring buffer
+│   |-- trade_logger.hpp        # Trade logger (CSV output)
 │
-├── src/                        # Implementation files
-│   ├── main.cpp                # Phase 1 entry point
-│   ├── order_book.cpp          # Phase 1 matching logic
-│   ├── order_book_v1.cpp       # Phase 1 copy
-│   ├── main_v2.cpp             # Phase 2 entry point + benchmark
-│   ├── order_book_v2.cpp       # Phase 2 matching logic
-│   ├── main_v3.cpp             # Phase 3 - ITCH ingestion
-│   ├── itch_parser.cpp         # Binary ITCH file parser
-│   ├── main_v4.cpp             # Phase 4 - trade logger wired in
-│   └── generate_itch.cpp       # Synthetic test data generator
+|-- src/                        # Implementation files
+│   |-- main.cpp                # Phase 1 entry point
+│   |-- order_book.cpp          # Phase 1 matching logic
+│   |-- order_book_v1.cpp       # Phase 1 copy
+│   |-- main_v2.cpp             # Phase 2 entry point + benchmark
+│   |-- order_book_v2.cpp       # Phase 2 matching logic
+│   |-- main_v3.cpp             # Phase 3 - ITCH ingestion
+│   |-- itch_parser.cpp         # Binary ITCH file parser
+│   |-- main_v4.cpp             # Phase 4 - trade logger wired in
+│   |-- generate_itch.cpp       # Synthetic test data generator
 │
-├── bench/                      # Benchmarks
-│   ├── bench_orderbook.cpp     # Google Benchmark suite
-│   └── latency_histogram.cpp   # p50/p99/p999 manual profiler
+|-- bench/                      # Benchmarks
+│   |-- bench_orderbook.cpp     # Google Benchmark suite
+│   |-- latency_histogram.cpp   # p50/p99/p999 manual profiler
 │
-└── tests/
-    └── test_matching.cpp       # Unit tests
+|-- tests/
+    |-- test_matching.cpp       # Unit tests
 ```
 
 ---
@@ -234,17 +234,17 @@ Produces `trades.csv` with all matched trades.
 ./latency_hist.exe
 ```
 ```
-╔══════════════════════════════════╗
-║   NanoMatch Latency Report       ║
-╠══════════════════════════════════╣
-║  Samples :     500000            ║
-╠══════════════════════════════════╣
-║  Min     :    100 ns             ║
-║  p50     :    300 ns             ║
-║  p90     :    500 ns             ║
-║  p99     :    800 ns             ║
-║  p99.9   :   6300 ns             ║
-╚══════════════════════════════════╝
+|==================================|
+|   NanoMatch Latency Report       |
+|==================================|
+|  Samples :     500000            |
+|==================================|
+|  Min     :    100 ns             |
+|  p50     :    300 ns             |
+|  p90     :    500 ns             |
+|  p99     :    800 ns             |
+|  p99.9   :   6300 ns             |
+|==================================|
 ```
 
 ---
@@ -302,7 +302,7 @@ Both STL baseline (`nanomatch_v1`) and optimized (`nanomatch_v2`) are built from
 
 ## References
 
-- [NASDAQ ITCH 5.0 Specification](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHspecification.pdf)
+- [NASDAQ ITCH 5.0 Specification](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts NQTVITCHspecification.pdf)
 - [Preshing - Acquire and Release Semantics](https://preshing.com/20120913/acquire-and-release-semantics/)
 - [Brendan Gregg - Flame Graphs](https://www.brendangregg.com/flamegraphs.html)
 - [Google Benchmark](https://github.com/google/benchmark)

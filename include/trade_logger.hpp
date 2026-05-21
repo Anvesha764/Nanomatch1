@@ -1,4 +1,3 @@
-// include/trade_logger.hpp
 #pragma once
 #include "order.hpp"
 #include <fstream>
@@ -24,7 +23,7 @@ public:
     }
 
     void start() {}
-    void stop()  { log_file_.flush(); }
+    void stop() { log_file_.flush(); }
 
     void log_trade(const TradeEvent& evt) noexcept {
         char buf[256];
@@ -40,11 +39,11 @@ public:
         if (logged_ % 10000 == 0) log_file_.flush();
     }
 
-    uint64_t logged_count()  const { return logged_;  }
+    uint64_t logged_count() const { return logged_;  }
     uint64_t dropped_count() const { return dropped_; }
 
 private:
     std::ofstream log_file_;
-    uint64_t      logged_;
-    uint64_t      dropped_;
+    uint64_t logged_;
+    uint64_t dropped_;
 };

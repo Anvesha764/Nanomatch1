@@ -1,4 +1,3 @@
-// src/main_v4.cpp
 #include "order_book_v2.hpp"
 #include "itch_parser.hpp"
 #include "trade_logger.hpp"
@@ -23,12 +22,10 @@ int main(int argc, char* argv[]) {
 
     ITCHCallbacks callbacks {
         .on_add = [&](const AddOrderEvent& e) {
-            Order o(e.order_id, e.price, e.quantity,
-                    e.side, e.timestamp);
+            Order o(e.order_id, e.price, e.quantity, e.side, e.timestamp);
             auto trades = book.add_order(o);
             for (auto& t : trades) {
-                logger.log_trade({t.buy_order_id, t.sell_order_id,
-                                  t.price, t.quantity, e.timestamp});
+                logger.log_trade({t.buy_order_id, t.sell_order_id, t.price, t.quantity, e.timestamp});
             }
             active_orders[e.order_id] = true;
             trade_count += trades.size();
@@ -44,7 +41,7 @@ int main(int argc, char* argv[]) {
     };
 
     std::cout << "Parsing: " << itch_path << "\n";
-    std::cout << "Filter:  " << filter    << "\n\n";
+    std::cout << "Filter:  " << filter << "\n\n";
     std::cout.flush();
 
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -56,12 +53,12 @@ int main(int argc, char* argv[]) {
     double sec = std::chrono::duration<double>(t1 - t0).count();
 
     std::cout << "=== PHASE 4 RESULTS ===\n"
-              << "Total messages : " << total                  << "\n"
-              << "Add orders     : " << add_count              << "\n"
-              << "Trades matched : " << trade_count            << "\n"
-              << "Trades logged  : " << logger.logged_count()  << "\n"
-              << "Trades dropped : " << logger.dropped_count() << "\n"
-              << "Time           : " << sec                    << "s\n"
+              << "Total messages : " << total<< "\n"
+              << "Add orders     : " << add_count<< "\n"
+              << "Trades matched : " << trade_count<< "\n"
+              << "Trades logged  : " << logger.logged_count()<< "\n"
+              << "Trades dropped : " << logger.dropped_count()<< "\n"
+              << "Time           : " << sec<< "s\n"
               << "Throughput     : "
               << (uint64_t)(total / sec) << " msg/sec\n";
 

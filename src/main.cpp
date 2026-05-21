@@ -1,4 +1,3 @@
-// src/main.cpp
 #include "order_book.hpp"
 #include <iostream>
 #include <chrono>
@@ -7,7 +6,6 @@ int main() {
     OrderBook book;
     uint64_t ts = 0;
 
-    // seed the book with some resting orders
     book.add_order({1, 10050, 100, Side::BUY,  ++ts});
     book.add_order({2, 10040, 200, Side::BUY,  ++ts});
     book.add_order({3, 10060, 150, Side::SELL, ++ts});
@@ -15,7 +13,6 @@ int main() {
 
     book.print_book();
 
-    // incoming aggressive BUY that crosses the spread
     std::cout << "\n>> Incoming SELL order: price=10030, qty=120\n";
 auto trades = book.add_order({5, 10030, 120, Side::SELL, ++ts});
 

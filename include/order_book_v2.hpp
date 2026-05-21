@@ -1,4 +1,3 @@
-// include/order_book_v2.hpp
 #pragma once
 #include "order.hpp"
 #include "price_level.hpp"
@@ -22,8 +21,8 @@ using AskMap = std::map<Price, PriceLevel>;
 class OrderBook_v2 {
 public:
     std::vector<Trade> add_order(Order order);
-    bool               cancel_order(OrderId id);
-    void               print_book(int depth = 5) const;
+    bool cancel_order(OrderId id);
+    void print_book(int depth = 5) const;
 
     std::size_t bid_levels() const { return bids_.size(); }
     std::size_t ask_levels() const { return asks_.size(); }
