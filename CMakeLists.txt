@@ -39,3 +39,9 @@ add_executable(nanomatch_v4
     src/itch_parser.cpp
 )
 target_link_libraries(nanomatch_v4 Threads::Threads)
+
+# Phase 5 — latency histogram
+add_executable(latency_hist
+    bench/latency_histogram.cpp
+    src/order_book_v2.cpp
+)
