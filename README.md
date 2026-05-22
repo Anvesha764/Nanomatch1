@@ -200,7 +200,7 @@ TRADE: buy=2 sell=5 px=10040 qty=20
 ```
 >> Benchmarking 100,000 orders...
 100,000 orders in ~14,000,000 ns
-Average: 141 ns/order
+Average: 130 ns/order
 ```
 
 ### Phase 3 - ITCH data ingestion
