@@ -55,3 +55,8 @@ if(benchmark_FOUND)
     )
     target_link_libraries(bench_orderbook benchmark::benchmark Threads::Threads)
 endif()
+
+add_executable(run_tests
+    tests/test_matching.cpp
+    src/order_book_v2.cpp
+)
