@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[]) {
     std::string itch_path = (argc >= 2) ? argv[1] : "test_data.itch";
-    std::string filter    = (argc >= 3) ? argv[2] : "AAPL";
+    std::string filter = (argc >= 3) ? argv[2] : "AAPL";
 
     std::cout << "Starting...\n"; std::cout.flush();
 
