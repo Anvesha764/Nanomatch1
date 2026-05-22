@@ -7,9 +7,9 @@
 #include <vector>
 
 struct Trade {
-    OrderId  buy_order_id;
-    OrderId  sell_order_id;
-    Price    price;
+    OrderId buy_order_id;
+    OrderId sell_order_id;
+    Price price;
     Quantity quantity;
 };
 
