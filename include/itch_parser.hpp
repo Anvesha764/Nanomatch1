@@ -9,24 +9,15 @@
 
 inline uint16_t bswap16(uint16_t v) { return (v >> 8) | (v << 8); }
 inline uint32_t bswap32(uint32_t v) {
-    return ((v & 0xFF000000) >> 24) | ((v & 0x00FF0000) >> 8)  |
-           ((v & 0x0000FF00) << 8)  | ((v & 0x000000FF) << 24);
+    return ((v & 0xFF000000) >> 24) | ((v & 0x00FF0000) >> 8) | ((v & 0x0000FF00) << 8)  | ((v & 0x000000FF) << 24);
 }
 inline uint64_t bswap64(uint64_t v) {
-    return ((v & 0xFF00000000000000ULL) >> 56) |
-           ((v & 0x00FF000000000000ULL) >> 40) |
-           ((v & 0x0000FF0000000000ULL) >> 24) |
-           ((v & 0x000000FF00000000ULL) >>  8) |
-           ((v & 0x00000000FF000000ULL) <<  8) |
-           ((v & 0x0000000000FF0000ULL) << 24) |
-           ((v & 0x000000000000FF00ULL) << 40) |
-           ((v & 0x00000000000000FFULL) << 56);
+    return ((v & 0xFF00000000000000ULL) >> 56) | ((v & 0x00FF000000000000ULL) >> 40) | ((v & 0x0000FF0000000000ULL) >> 24) | ((v & 0x000000FF00000000ULL) >>  8) |
+           ((v & 0x00000000FF000000ULL) <<  8) |((v & 0x0000000000FF0000ULL) << 24) | ((v & 0x000000000000FF00ULL) << 40) | ((v & 0x00000000000000FFULL) << 56);
 }
 
 inline uint64_t read_ts6(const uint8_t* b) {
-    return ((uint64_t)b[0] << 40) | ((uint64_t)b[1] << 32) |
-           ((uint64_t)b[2] << 24) | ((uint64_t)b[3] << 16) |
-           ((uint64_t)b[4] <<  8) |  (uint64_t)b[5];
+    return ((uint64_t)b[0] << 40) | ((uint64_t)b[1] << 32) | ((uint64_t)b[2] << 24) | ((uint64_t)b[3] << 16) | ((uint64_t)b[4] <<  8) |  (uint64_t)b[5];
 }
 
 #pragma pack(push, 1)
@@ -84,8 +75,8 @@ struct ExecuteOrderEvent {
 };
 
 struct ITCHCallbacks {
-    std::function<void(const AddOrderEvent&)>     on_add;
-    std::function<void(const CancelOrderEvent&)>  on_cancel;
+    std::function<void(const AddOrderEvent&)> on_add;
+    std::function<void(const CancelOrderEvent&)> on_cancel;
     std::function<void(const ExecuteOrderEvent&)> on_execute;
 };
 
