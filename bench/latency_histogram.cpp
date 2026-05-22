@@ -49,18 +49,18 @@ int main() {
     };
 
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════╗\n";
-    std::cout << "║   NanoMatch Latency Report       ║\n";
-    std::cout << "╠══════════════════════════════════╣\n";
-    std::cout << "║  Samples : " << std::setw(10) << SAMPLES     << "        ║\n";
-    std::cout << "╠══════════════════════════════════╣\n";
-    std::cout << "║  Min     : " << std::setw(7)  << pct(0)      << " ns         ║\n";
-    std::cout << "║  p50     : " << std::setw(7)  << pct(50)     << " ns         ║\n";
-    std::cout << "║  p90     : " << std::setw(7)  << pct(90)     << " ns         ║\n";
-    std::cout << "║  p99     : " << std::setw(7)  << pct(99)     << " ns         ║\n";
-    std::cout << "║  p99.9   : " << std::setw(7)  << pct(99.9)   << " ns         ║\n";
-    std::cout << "║  Max     : " << std::setw(7)  << pct(100)    << " ns         ║\n";
-    std::cout << "╚══════════════════════════════════╝\n";
+    std::cout << "|==================================|\n";
+    std::cout << "|   NanoMatch Latency Report       |\n";
+    std::cout << "|==================================|\n";
+    std::cout << "|  Samples : " << std::setw(10) << SAMPLES     << "        |\n";
+    std::cout << "|==================================|\n";
+    std::cout << "|  Min     : " << std::setw(7)  << pct(0)      << " ns         |\n";
+    std::cout << "|  p50     : " << std::setw(7)  << pct(50)     << " ns         |\n";
+    std::cout << "|  p90     : " << std::setw(7)  << pct(90)     << " ns         |\n";
+    std::cout << "|  p99     : " << std::setw(7)  << pct(99)     << " ns         |\n";
+    std::cout << "|  p99.9   : " << std::setw(7)  << pct(99.9)   << " ns         |\n";
+    std::cout << "|  Max     : " << std::setw(7)  << pct(100)    << " ns         |\n";
+    std::cout << "|==================================|\n";
 
     std::cout << "\nLatency Distribution:\n";
     struct Bucket { const char* label; int64_t limit; };
