@@ -291,7 +291,7 @@ Both STL baseline (`nanomatch_v1`) and optimized (`nanomatch_v2`) are built from
 
 ## What I'd Do Next
 
-- **Linux migration** - enable `mmap` + `MADV_SEQUENTIAL` for zero-copy file I/O (already documented in `mmap_reader.hpp`)
+- **Linux migration** - enable `mmap` + `MADV_SEQUENTIAL` for zero-copy file I/O instead of `fread`
 - **True multithreaded SPSC** - run logger as a real background thread on Linux where pthreads behave correctly
 - **Google Benchmark integration** - p50/p99 via `bench/bench_orderbook.cpp` with `--benchmark_repetitions`
 - **CPU flame graphs** - `perf record` + Brendan Gregg's FlameGraph on Linux to find exact bottlenecks
