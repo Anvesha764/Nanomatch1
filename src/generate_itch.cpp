@@ -42,8 +42,8 @@ int main() {
         msg.timestamp[5] = (ts >>  0) & 0xFF;
 
         msg.order_ref_num = bswap64((uint64_t)(i + 1));
-        msg.buy_sell      = (i % 2 == 0) ? 'B' : 'S';
-        msg.shares        = bswap32(100);
+        msg.buy_sell = (i % 2 == 0) ? 'B' : 'S';
+        msg.shares = bswap32(100);
         int32_t offset = (rng() % 101) - 50;
         msg.price = bswap32(base_price + offset * 100);
 
@@ -55,6 +55,6 @@ int main() {
     }
 
     out.close();
-    std::cout << "Done — test_data.itch created\n";
+    std::cout << "Done - test_data.itch created\n";
     return 0;
 }
