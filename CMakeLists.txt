@@ -45,3 +45,13 @@ add_executable(latency_hist
     bench/latency_histogram.cpp
     src/order_book_v2.cpp
 )
+
+# Google Benchmark suite
+find_package(benchmark QUIET)
+if(benchmark_FOUND)
+    add_executable(bench_orderbook
+        bench/bench_orderbook.cpp
+        src/order_book_v2.cpp
+    )
+    target_link_libraries(bench_orderbook benchmark::benchmark Threads::Threads)
+endif()
