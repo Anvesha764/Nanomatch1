@@ -11,7 +11,7 @@ include_directories(include)
 # Phase 1 — STL baseline
 add_executable(nanomatch_v1
     src/main.cpp
-    src/order_book_v1.cpp
+    src/order_book.cpp
 )
 
 # Phase 2 — PriceLevelQueue + pool allocator
