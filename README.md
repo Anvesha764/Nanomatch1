@@ -2,7 +2,7 @@
 
 A limit order book and matching engine written in C++20. Built to understand what actually happens inside an exchange — not the finance layer, but the systems layer underneath it.
 
-p99 latency under 800ns. Zero heap allocations on the hot path. Parses real NASDAQ ITCH 5.0 binary format.
+p99 latency under 700ns on the optimized path. Zero heap allocations on the hot path. Parses real NASDAQ ITCH 5.0 binary format.
 
 ---
 
@@ -23,12 +23,21 @@ The project is split into four phases, each adding a layer:
 
 Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`:
 
+### Latency: v1 (STL baseline) vs v2 (optimized)
+
+| Metric | v1 — `std::map` + `std::vector` | v2 — Pool + PriceLevelQueue | Improvement |
+|---|---|---|---|
+| p50 latency | 200 ns | 200 ns | — |
+| p90 latency | 500 ns | 500 ns | — |
+| p99 latency | 900 ns | 700 ns | 1.3× faster |
+| p99.9 latency | 4,800 ns | 3,400 ns | 1.4× faster |
+
+> Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`, 500k samples each.
+
+### System throughput (v2)
+
 | | |
 |---|---|
-| p50 latency | 300 ns |
-| p90 latency | 500 ns |
-| p99 latency | 800 ns |
-| p99.9 latency | 6,300 ns |
 | Throughput (ITCH parser) | 2.08M msg/sec |
 | Throughput (order matching) | 1.38M msg/sec |
 | Trades logged | 398,206 |
@@ -55,7 +64,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
 
-This builds six targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nanomatch_v4`, `generate_itch`, and `latency_hist`.
+This builds seven targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nanomatch_v4`, `generate_itch`, `latency_hist`, and `latency_hist_v1`.
 
 ---
 
@@ -82,9 +91,14 @@ This builds six targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nanoma
 ./nanomatch_v4.exe test_data.itch AAPL      # writes trades.csv
 ```
 
-**Latency histogram:**
+**Latency histogram (v2 optimized):**
 ```bash
 ./latency_hist.exe                           # 500k samples, p50/p90/p99/p999
+```
+
+**Latency histogram (v1 STL baseline):**
+```bash
+./latency_hist_v1.exe                        # same 500k samples, v1 OrderBook
 ```
 
 ---
@@ -97,8 +111,4 @@ This builds six targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nanoma
 
 **Pool allocator.** `std::map` normally calls `malloc` per node. The pool allocator pre-allocates a slab and hands out blocks via a free list. Zero system calls on the hot path after init.
 
-**ITCH parser.** NASDAQ ITCH 5.0 is big-endian packed binary. Uses `#pragma pack(1)` and manual `bswap` to parse each message in a single memory read. Callback-based so the parser is decoupled from the book.
-
-**SPSC queue.** `memory_order_release` on writes, `memory_order_acquire` on reads — correct happens-before without a mutex. Head and tail are on separate cache lines with `alignas(64)` to prevent false sharing.
-
----
+**ITCH parser.** NASDAQ ITCH 5.0 is big-endian packed binary.
