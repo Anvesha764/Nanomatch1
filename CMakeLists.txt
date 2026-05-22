@@ -62,3 +62,6 @@ add_executable(run_tests
     src/order_book_v2.cpp
 )
 add_test(NAME matching_tests COMMAND run_tests)
+set_tests_properties(matching_tests PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
