@@ -91,6 +91,7 @@ nanomatch/
 |-- include/                    # All header files
 │   |-- types.hpp               # OrderId, Price, Quantity, Side
 │   |-- order.hpp               # Order struct with default constructor
+│   |-- trade.hpp               # Shared Trade struct
 │   |-- order_book.hpp          # Phase 1 - STL baseline LOB
 │   |-- order_book_v1.hpp       # Phase 1 copy (for comparison)
 │   |-- order_book_v2.hpp       # Phase 2 - optimized LOB
@@ -103,7 +104,6 @@ nanomatch/
 |-- src/                        # Implementation files
 │   |-- main.cpp                # Phase 1 entry point
 │   |-- order_book.cpp          # Phase 1 matching logic
-│   |-- order_book_v1.cpp       # Phase 1 copy
 │   |-- main_v2.cpp             # Phase 2 entry point + benchmark
 │   |-- order_book_v2.cpp       # Phase 2 matching logic
 │   |-- main_v3.cpp             # Phase 3 - ITCH ingestion
@@ -133,8 +133,7 @@ nanomatch/
 
 > Developed and tested on **Windows 11 with MSYS2 MinGW64 + GCC 16.1.0**.  
 > Also works on Ubuntu 20.04+ with `sudo apt install build-essential cmake`.  
-> Note: `mmap` and `perf` features require Linux. Windows build uses `fread` equivalent.
-
+> Note: `perf` profiling requires Linux. Windows build uses `fread` for file I/O.
 ---
 
 ### Step-by-step setup
@@ -291,6 +290,7 @@ Both STL baseline (`nanomatch_v1`) and optimized (`nanomatch_v2`) are built from
 
 ## What I'd Do Next
 
+- **O(1) cancel** — `PriceLevelQueue::remove()` currently does a linear scan + shift (O(n) in queue size). Replace with tombstone marking or an intrusive doubly-linked list for true O(1) cancellation
 - **Linux migration** - enable `mmap` + `MADV_SEQUENTIAL` for zero-copy file I/O instead of `fread`
 - **True multithreaded SPSC** - run logger as a real background thread on Linux where pthreads behave correctly
 - **Google Benchmark integration** - p50/p99 via `bench/bench_orderbook.cpp` with `--benchmark_repetitions`
@@ -302,7 +302,7 @@ Both STL baseline (`nanomatch_v1`) and optimized (`nanomatch_v2`) are built from
 
 ## References
 
-- [NASDAQ ITCH 5.0 Specification](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts NQTVITCHspecification.pdf)
+- [NASDAQ ITCH 5.0 Specification](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHspecification.pdf)
 - [Preshing - Acquire and Release Semantics](https://preshing.com/20120913/acquire-and-release-semantics/)
 - [Brendan Gregg - Flame Graphs](https://www.brendangregg.com/flamegraphs.html)
 - [Google Benchmark](https://github.com/google/benchmark)
