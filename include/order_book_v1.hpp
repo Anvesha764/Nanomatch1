@@ -8,9 +8,9 @@
 using PriceLevel = std::vector<Order>;
 
 struct Trade {
-    OrderId  buy_order_id;
-    OrderId  sell_order_id;
-    Price    price;
+    OrderId buy_order_id;
+    OrderId sell_order_id;
+    Price price;
     Quantity quantity;
 };
 
@@ -18,7 +18,7 @@ class OrderBook {
 public:
     std::vector<Trade> add_order(Order order);
     bool cancel_order(OrderId id);
-    void  print_book(int depth = 5) const;
+    void print_book(int depth = 5) const;
 
 private:
     std::map<Price, PriceLevel, std::greater<Price>> bids_;
