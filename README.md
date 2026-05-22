@@ -287,29 +287,8 @@ Real NASDAQ market data is big-endian packed binary structs. We use `#pragma pac
 Both STL baseline (`nanomatch_v1`) and optimized (`nanomatch_v2`) are built from the same codebase. This makes the performance delta measurable and demonstrable.
 
 ---
-
-## What I'd Do Next
-
-- **O(1) cancel** — `PriceLevelQueue::remove()` currently does a linear scan + shift (O(n) in queue size). Replace with tombstone marking or an intrusive doubly-linked list for true O(1) cancellation
-- **Linux migration** - enable `mmap` + `MADV_SEQUENTIAL` for zero-copy file I/O instead of `fread`
-- **True multithreaded SPSC** - run logger as a real background thread on Linux where pthreads behave correctly
-- **Google Benchmark integration** - p50/p99 via `bench/bench_orderbook.cpp` with `--benchmark_repetitions`
-- **CPU flame graphs** - `perf record` + Brendan Gregg's FlameGraph on Linux to find exact bottlenecks
-- **Kernel bypass networking** - DPDK to receive live market data without OS involvement
-- **Order Replace ('U' message)** - implement ITCH replace as atomic cancel + re-add
-
----
-
-## References
-
-- [NASDAQ ITCH 5.0 Specification](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHspecification.pdf)
-- [Preshing - Acquire and Release Semantics](https://preshing.com/20120913/acquire-and-release-semantics/)
-- [Brendan Gregg - Flame Graphs](https://www.brendangregg.com/flamegraphs.html)
-- [Google Benchmark](https://github.com/google/benchmark)
-
----
-
-## Author
-
-**Anvesha Singh** - IIT Guwahati  
-Built as a systems engineering portfolio project demonstrating C++ low-latency techniques applied to financial exchange infrastructure.
+## Flame Graph
+![Combined Flame Graph](flamegraph_combined.svg)
+> CPU cycle flame graph: `baseline` (left) vs `optimized` (right).  
+> Baseline shows prominent `malloc`/`cfree` spikes from heap allocation.  
+> Optimized eliminates these entirely via `PriceLevelQueue` circular buffer.
