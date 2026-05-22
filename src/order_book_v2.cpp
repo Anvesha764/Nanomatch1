@@ -99,9 +99,12 @@ void OrderBook_v2::print_book(int depth) const {
     std::vector<std::pair<Price, Quantity>> ask_levels;
     for (auto& [px, lvl] : asks_) {
         Quantity total = 0;
-        for (std::size_t j = 0; j < lvl.size(); ++j)
-            total += const_cast<PriceLevel&>(lvl).front().remaining();
-        ask_levels.push_back({px, lvl.size() * 100});
+        PriceLevel tmp = lvl;          // copy so we can iterate
+        while (!tmp.empty()) {
+            total += tmp.front().remaining();
+            tmp.pop_front();
+        }
+        ask_levels.push_back({px, total});
         if (++i >= depth) break;
     }
     for (auto it = ask_levels.rbegin(); it != ask_levels.rend(); ++it)
@@ -110,11 +113,17 @@ void OrderBook_v2::print_book(int depth) const {
 
     std::cout << std::string(45, '-') << "\n";
 
-    i = 0;
+   i = 0;
     for (auto& [px, lvl] : bids_) {
+        Quantity total = 0;
+        PriceLevel tmp = lvl;
+        while (!tmp.empty()) {
+            total += tmp.front().remaining();
+            tmp.pop_front();
+        }
         std::cout << std::setw(10) << ""
                   << " | " << std::setw(8) << px
-                  << " | " << lvl.size() * 100 << "\n";
+                  << " | " << total << "\n";
         if (++i >= depth) break;
     }
     std::cout << std::string(45, '=') << "\n";
