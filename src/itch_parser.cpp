@@ -3,9 +3,7 @@
 #include <cstring>
 #include <cstdio>
 
-uint64_t parse_itch_file(const std::string& path,
-                         const ITCHCallbacks& cb,
-                         const std::string& filter_stock) {
+uint64_t parse_itch_file(const std::string& path, const ITCHCallbacks& cb, const std::string& filter_stock) {
     FILE* f = fopen(path.c_str(), "rb");
     if (!f) {
         std::cerr << "Cannot open: " << path << "\n";
@@ -13,8 +11,8 @@ uint64_t parse_itch_file(const std::string& path,
     }
 
     uint64_t msg_count = 0;
-    uint8_t  len_buf[2];
-    uint8_t  msg_buf[1024];
+    uint8_t len_buf[2];
+    uint8_t msg_buf[1024];
 
     while (fread(len_buf, 1, 2, f) == 2) {
         uint16_t msg_len = bswap16(
@@ -41,12 +39,12 @@ uint64_t parse_itch_file(const std::string& path,
 
             AddOrderEvent evt;
             evt.order_id  = bswap64(m->order_ref_num);
-            evt.price     = static_cast<Price>(bswap32(m->price));
-            evt.quantity  = static_cast<Quantity>(bswap32(m->shares));
-            evt.side      = (m->buy_sell == 'B') ? Side::BUY : Side::SELL;
+            evt.price = static_cast<Price>(bswap32(m->price));
+            evt.quantity = static_cast<Quantity>(bswap32(m->shares));
+            evt.side = (m->buy_sell == 'B') ? Side::BUY : Side::SELL;
             evt.timestamp = read_ts6(m->timestamp);
             std::memcpy(evt.stock, m->stock, 8);
-            evt.stock[8]  = '\0';
+            evt.stock[8] = '\0';
 
             if (cb.on_add) cb.on_add(evt);
             break;
@@ -57,7 +55,7 @@ uint64_t parse_itch_file(const std::string& path,
             auto* m = reinterpret_cast<const itch_delete_order*>(msg_buf);
 
             CancelOrderEvent evt;
-            evt.order_id  = bswap64(m->order_ref_num);
+            evt.order_id = bswap64(m->order_ref_num);
             evt.timestamp = read_ts6(m->timestamp);
 
             if (cb.on_cancel) cb.on_cancel(evt);
@@ -69,9 +67,9 @@ uint64_t parse_itch_file(const std::string& path,
             auto* m = reinterpret_cast<const itch_execute_order*>(msg_buf);
 
             ExecuteOrderEvent evt;
-            evt.order_id     = bswap64(m->order_ref_num);
+            evt.order_id = bswap64(m->order_ref_num);
             evt.executed_qty = bswap32(m->executed_shares);
-            evt.timestamp    = read_ts6(m->timestamp);
+            evt.timestamp = read_ts6(m->timestamp);
 
             if (cb.on_execute) cb.on_execute(evt);
             break;
