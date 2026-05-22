@@ -9,10 +9,10 @@
 #include <string>
 
 struct TradeEvent {
-    OrderId   buy_order_id;
-    OrderId   sell_order_id;
-    Price     price;
-    Quantity  quantity;
+    OrderId buy_order_id;
+    OrderId sell_order_id;
+    Price price;
+    Quantity quantity;
     Timestamp timestamp;
 };
 
@@ -75,8 +75,8 @@ private:
     }
 
     SPSCQueue<TradeEvent, QUEUE_CAPACITY> queue_;
-    std::ofstream  log_file_;
-    std::thread    logger_thread_;
+    std::ofstream log_file_;
+    std::thread logger_thread_;
     std::atomic<bool> running_;
     std::atomic<uint64_t> logged_{0};
     std::atomic<uint64_t> dropped_{0};
