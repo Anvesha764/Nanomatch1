@@ -70,3 +70,12 @@ add_executable(latency_hist_v1
     bench/latency_histogram_v1.cpp
     src/order_book.cpp
 )
+
+find_package(benchmark QUIET)
+if(benchmark_FOUND)
+    add_executable(bench_orderbook_v1
+        bench/bench_orderbook_v1.cpp
+        src/order_book.cpp
+    )
+    target_link_libraries(bench_orderbook_v1 benchmark::benchmark Threads::Threads)
+endif()
