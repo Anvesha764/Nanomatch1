@@ -14,7 +14,7 @@ int main() {
     book.print_book();
 
     std::cout << "\n>> Incoming SELL order: price=10030, qty=120\n";
-auto trades = book.add_order({5, 10030, 120, Side::SELL, ++ts});
+    auto trades = book.add_order({5, 10030, 120, Side::SELL, ++ts});
 
     for (auto& t : trades)
         std::cout << "TRADE: buy=" << t.buy_order_id
