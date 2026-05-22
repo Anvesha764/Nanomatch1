@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(nanomatch CXX)
+enable_testing()
 find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -60,3 +61,4 @@ add_executable(run_tests
     tests/test_matching.cpp
     src/order_book_v2.cpp
 )
+add_test(NAME matching_tests COMMAND run_tests)
