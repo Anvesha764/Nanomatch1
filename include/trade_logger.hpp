@@ -21,7 +21,7 @@ public:
     static constexpr std::size_t QUEUE_CAPACITY = 1 << 17; // 131072
 
     explicit TradeLogger(const std::string& log_path)
-        : logged_(0), dropped_(0), running_(false)
+        : running_(false)
     {
         log_file_.open(log_path, std::ios::out | std::ios::trunc);
         if (!log_file_.is_open())
@@ -53,11 +53,11 @@ public:
     // Called from matching thread (producer)
     void log_trade(const TradeEvent& evt) noexcept {
         if (!queue_.push(evt))
-            ++dropped_;
+          dropped_.fetch_add(1, std::memory_order_relaxed);  
     }
 
-    uint64_t logged_count()  const { return logged_;  }
-    uint64_t dropped_count() const { return dropped_; }
+    uint64_t logged_count()  const { return logged_.load(std::memory_order_relaxed);  }
+    uint64_t dropped_count() const { return dropped_.load(std::memory_order_relaxed); }
 
 private:
     void write_trade(const TradeEvent& evt) {
@@ -70,14 +70,14 @@ private:
             (long long)evt.price,
             (unsigned)evt.quantity);
         log_file_.write(buf, len);
-        ++logged_;
-        if (logged_ % 10000 == 0) log_file_.flush();
+        auto count = ++logged_;
+        if (count % 10000 == 0) log_file_.flush();
     }
 
     SPSCQueue<TradeEvent, QUEUE_CAPACITY> queue_;
     std::ofstream  log_file_;
     std::thread    logger_thread_;
     std::atomic<bool> running_;
-    uint64_t logged_;
-    uint64_t dropped_;
+    std::atomic<uint64_t> logged_{0};
+    std::atomic<uint64_t> dropped_{0};
 };
