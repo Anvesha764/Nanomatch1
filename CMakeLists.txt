@@ -65,8 +65,3 @@ add_test(NAME matching_tests COMMAND run_tests)
 set_tests_properties(matching_tests PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
-
-add_executable(latency_hist_v1
-    bench/latency_histogram_v1.cpp
-    src/order_book.cpp
-)
