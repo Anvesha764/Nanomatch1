@@ -44,7 +44,8 @@ int main() {
         msg.order_ref_num = bswap64((uint64_t)(i + 1));
         msg.buy_sell = (i % 2 == 0) ? 'B' : 'S';
         msg.shares = bswap32(100);
-        int32_t offset = (rng() % 101) - 50;
+        std::uniform_int_distribution<int32_t> dist(-50, 50);
+        int32_t offset = dist(rng);
         msg.price = bswap32(base_price + offset * 100);
 
         std::memcpy(msg.stock, "AAPL    ", 8);
