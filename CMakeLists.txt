@@ -41,22 +41,29 @@ add_executable(nanomatch_v4
 )
 target_link_libraries(nanomatch_v4 Threads::Threads)
 
-# Phase 5 - latency histogram
+# Latency histogram — v2
 add_executable(latency_hist
     bench/latency_histogram.cpp
     src/order_book_v2.cpp
 )
 
-# Google Benchmark suite
-find_package(benchmark QUIET)
-if(benchmark_FOUND)
-    add_executable(bench_orderbook
-        bench/bench_orderbook.cpp
-        src/order_book_v2.cpp
-    )
-    target_link_libraries(bench_orderbook benchmark::benchmark Threads::Threads)
-endif()
+# Latency histogram — v1 STL baseline
+add_executable(latency_hist_v1
+    bench/latency_histogram_v1.cpp
+    src/order_book.cpp
+)
 
+# Side-by-side v1 vs v2 latency comparison
+# bench_v1.cpp and bench_v2.cpp are separate TUs so each only sees one book header
+add_executable(latency_compare
+    bench/latency_compare.cpp
+    bench/bench_v1.cpp
+    bench/bench_v2.cpp
+    src/order_book.cpp
+    src/order_book_v2.cpp
+)
+
+# Tests
 add_executable(run_tests
     tests/test_matching.cpp
     src/order_book_v2.cpp
@@ -64,15 +71,4 @@ add_executable(run_tests
 add_test(NAME matching_tests COMMAND run_tests)
 set_tests_properties(matching_tests PROPERTIES
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-
-add_executable(latency_hist_v1
-    bench/latency_histogram_v1.cpp
-    src/order_book.cpp
-)
-
-add_executable(latency_compare
-    bench/latency_compare.cpp
-    src/order_book.cpp
-    src/order_book_v2.cpp
 )

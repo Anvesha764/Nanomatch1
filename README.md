@@ -2,7 +2,7 @@
 
 A limit order book and matching engine written in C++20. Built to understand what actually happens inside an exchange — not the finance layer, but the systems layer underneath it.
 
-p99 latency under 700ns on the optimized path. Zero heap allocations on the hot path. Parses real NASDAQ ITCH 5.0 binary format.
+p99 latency under 400ns on the optimized path. Zero heap allocations on the hot path. Parses real NASDAQ ITCH 5.0 binary format.
 
 ---
 
@@ -13,7 +13,7 @@ Maintains a live order book of resting buy/sell orders and matches incoming orde
 The project is split into four phases, each adding a layer:
 
 - **Phase 1** — basic matching engine with STL containers (`std::map`, `std::vector`)
-- **Phase 2** — swap in a fixed circular buffer per price level and a pool allocator to kill heap allocation on the hot path
+- **Phase 2** — swap in a fixed circular buffer per price level and a flat hash map to kill heap allocation on the hot path
 - **Phase 3** — wire in a binary ITCH 5.0 parser and run against synthetic market data
 - **Phase 4** — add a lock-free SPSC ring buffer and async trade logger that writes to CSV without touching the matching thread
 
@@ -21,20 +21,22 @@ The project is split into four phases, each adding a layer:
 
 ## Numbers
 
-Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`:
+Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`, 500k samples:
 
 ### Latency: v1 (STL baseline) vs v2 (optimized)
 
-| Metric | v1 — STL (`map` + `vector`) | v2 — Pool + PriceLevelQueue | Speedup |
+| Metric | v1 — STL (`map` + `unordered_map`) | v2 — PriceLevelArray + FlatHashMap | Speedup |
 |---|---|---|---|
-| p50 latency | 187,400 ns | 200 ns | ~937x |
-| p90 latency | 431,200 ns | 500 ns | ~862x |
-| p99 latency | 748,600 ns | 700 ns | ~1,070x |
-| p99.9 latency | 3,812,000 ns | 3,400 ns | ~1,121x |
+| p50 latency | 300 ns | 200 ns | 1.5x |
+| p90 latency | 400 ns | 300 ns | 1.3x |
+| p99 latency | 900 ns | 400 ns | 2.2x |
+| p99.9 latency | 6,900 ns | 600 ns | 11.5x |
+| Max latency | 6,510,200 ns | 219,000 ns | 29.7x |
+| Mean latency | 355 ns | 256 ns | 1.4x |
 
-> Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`, 500k samples each.
+> Workload: aggressive `add_order` crossing the best bid/ask, measuring the full match path (find + fill + erase). 500k samples, seed 42, GCC `-O3 -march=native`.
 
-The v1 hot path is dominated by `std::_Rb_tree` node allocations (~4.4% of samples in `__new_allocator`) and `std::_Hashtable` rehashing. The flamegraph shows these disappear entirely in v2.
+The story is in the tail. p50 and p90 are similar because both implementations execute a single match quickly. The gap opens at p99 and beyond: v1's `unordered_map` periodically rehashes and `_Rb_tree` calls `malloc` per new price level — those allocations show up as latency spikes. v2 has zero heap allocation on the hot path so the tail stays clean.
 
 ### System throughput (v2)
 
@@ -66,7 +68,19 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
 
-This builds seven targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nanomatch_v4`, `generate_itch`, `latency_hist`, and `latency_hist_v1`.
+This builds the following targets:
+
+| Target | Description |
+|---|---|
+| `nanomatch_v1` | Phase 1 — STL matching engine |
+| `nanomatch_v2` | Phase 2 — optimized matching engine |
+| `nanomatch_v3` | Phase 3 — ITCH parser + ingestion |
+| `nanomatch_v4` | Phase 4 — SPSC trade logger |
+| `generate_itch` | Synthetic ITCH data generator |
+| `latency_hist` | Latency histogram for v2 |
+| `latency_hist_v1` | Latency histogram for v1 |
+| `latency_compare` | Side-by-side v1 vs v2 comparison |
+| `run_tests` | Unit tests |
 
 ---
 
@@ -77,7 +91,7 @@ This builds seven targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nano
 ./nanomatch_v1.exe
 ```
 
-**Phase 2 — optimized + benchmark:**
+**Phase 2 — optimized:**
 ```bash
 ./nanomatch_v2.exe
 ```
@@ -93,14 +107,25 @@ This builds seven targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nano
 ./nanomatch_v4.exe test_data.itch AAPL      # writes trades.csv
 ```
 
-**Latency histogram (v2 optimized):**
+**Side-by-side latency comparison (v1 vs v2):**
 ```bash
-./latency_hist.exe                           # 500k samples, p50/p90/p99/p999
+./latency_compare.exe                        # 500k samples
+./latency_compare.exe 1000000               # custom sample count
 ```
 
-**Latency histogram (v1 STL baseline):**
+**Latency histogram — v2:**
 ```bash
-./latency_hist_v1.exe                        # same 500k samples, v1 OrderBook
+./latency_hist.exe
+```
+
+**Latency histogram — v1:**
+```bash
+./latency_hist_v1.exe
+```
+
+**Tests:**
+```bash
+./run_tests.exe
 ```
 
 ---
@@ -109,9 +134,11 @@ This builds seven targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nano
 
 **Integer prices.** Everything is stored as `int64_t` ticks (e.g. `1000000` = $100.00). Float equality is broken for this use case.
 
-**PriceLevelQueue.** Each price level is a fixed-size circular buffer stored inline in the map node. No pointer chasing, no heap allocation after construction. `push_back` and `pop_front` are index arithmetic.
+**PriceLevelQueue.** Each price level is a fixed-size circular buffer stored inline in the array slot. No pointer chasing, no heap allocation after construction. `push_back` and `pop_front` are index arithmetic. Capacity: 64 orders per level.
 
-**Pool allocator.** `std::map` normally calls `malloc` per node. The pool allocator pre-allocates a slab and hands out blocks via a free list. Zero system calls on the hot path after init.
+**PriceLevelArray.** Replaces `std::map<Price, PriceLevelQueue>`. Flat sorted array of `{price, queue}` slots — binary search for lookup, memmove for insert/erase. Cache-friendly vs. pointer-chasing of red-black tree nodes. Capacity: 256 price levels per side.
+
+**FlatHashMap.** Replaces `std::unordered_map<OrderId, {Side, Price}>`. Open-addressing with linear probing, all storage inline — no heap allocation, no rehash on the hot path. Fibonacci hashing for good distribution of sequential order IDs.
 
 **ITCH parser.** NASDAQ ITCH 5.0 is big-endian packed binary. Manual `bswap` helpers avoid `<arpa/inet.h>` and keep the parser portable across Windows and Linux.
 
