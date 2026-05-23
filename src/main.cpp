@@ -1,4 +1,4 @@
-#include "order_book.hpp"
+#include "order_book_v1.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -6,15 +6,19 @@ int main() {
     OrderBook book;
     uint64_t ts = 0;
 
-    book.add_order({1, 10050, 100, Side::BUY,  ++ts});
-    book.add_order({2, 10040, 200, Side::BUY,  ++ts});
-    book.add_order({3, 10060, 150, Side::SELL, ++ts});
-    book.add_order({4, 10070, 100, Side::SELL, ++ts});
+    std::cout << "--- NANOMATCH v1: CORE ENGINE TEST ---\n\n";
+
+    // Add resting orders — none of these cross, so no trades yet
+    book.add_order({1, 10040, 10, Side::BUY,  ++ts});
+    book.add_order({2, 10050, 15, Side::BUY,  ++ts});
+    book.add_order({3, 10050,  5, Side::BUY,  ++ts});
+    book.add_order({4, 10070, 20, Side::SELL, ++ts});
 
     book.print_book();
 
-    std::cout << "\n>> Incoming SELL order: price=10030, qty=120\n";
-    auto trades = book.add_order({5, 10030, 120, Side::SELL, ++ts});
+    // Incoming SELL that crosses the bids
+    std::cout << "\n>> Incoming SELL order: price=10040, qty=12\n";
+    auto trades = book.add_order({5, 10040, 12, Side::SELL, ++ts});
 
     for (auto& t : trades)
         std::cout << "TRADE: buy=" << t.buy_order_id

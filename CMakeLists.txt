@@ -71,3 +71,8 @@ add_executable(latency_hist_v1
     src/order_book.cpp
 )
 
+add_executable(latency_compare
+    bench/latency_compare.cpp
+    src/order_book.cpp
+    src/order_book_v2.cpp
+)
