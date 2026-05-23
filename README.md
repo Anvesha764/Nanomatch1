@@ -25,12 +25,12 @@ Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`:
 
 ### Latency: v1 (STL baseline) vs v2 (optimized)
 
-| Metric | v1 — `std::map` + `std::vector` | v2 — Pool + PriceLevelQueue | Improvement |
-|---|---|---|---|
-| p50 latency | 200 ns | 200 ns | — |
-| p90 latency | 500 ns | 500 ns | — |
-| p99 latency | 900 ns | 700 ns | 1.3× faster |
-| p99.9 latency | 4,800 ns | 3,400 ns | 1.4× faster |
+| Metric  | v2— Pool + PriceLevelQueue | 
+|---|---|
+| p50 latency | 200 ns |
+| p90 latency | 500 ns |
+| p99 latency | 700 ns |
+| p99.9 latency | 3,400 ns |
 
 > Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`, 500k samples each.
 
