@@ -66,12 +66,25 @@ void test_v1_sell_matches_highest_bid() {
     std::cout << "[PASS] test_v1_sell_matches_highest_bid\n";
 }
 
+void test_sweep_multiple_levels() {
+    OrderBook_v2 book;
+    book.add_order({1, 10060, 50, Side::BUY, 1});
+    book.add_order({2, 10050, 50, Side::BUY, 2});
+    book.add_order({3, 10040, 50, Side::BUY, 3});
+    // Aggressive sell sweeps all three levels
+    auto trades = book.add_order({4, 10030, 150, Side::SELL, 4});
+    assert(trades.size()     == 3);
+    assert(book.bid_levels() == 0);
+    std::cout << "[PASS] test_sweep_multiple_levels\n";
+}
+
 int main() {
     test_basic_match();
     test_partial_fill();
     test_no_cross();
     test_cancel_order();
     test_price_time_priority();
+    test_sweep_multiple_levels();
     std::cout << "\nAll tests passed.\n";
     return 0;
 }
