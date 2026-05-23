@@ -55,6 +55,16 @@ void test_price_time_priority() {
     assert(trades[0].buy_order_id == 1);  // order 1 filled, not order 2
     std::cout << "[PASS] test_price_time_priority\n";
 }
+void test_v1_sell_matches_highest_bid() {
+    OrderBook book;
+    book.add_order({1, 10040, 100, Side::BUY, 1});
+    book.add_order({2, 10060, 100, Side::BUY, 2});
+    auto trades = book.add_order({3, 10050, 100, Side::SELL, 3});
+    assert(trades.size()          == 1);
+    assert(trades[0].price        == 10060); // must match best bid
+    assert(trades[0].buy_order_id == 2);
+    std::cout << "[PASS] test_v1_sell_matches_highest_bid\n";
+}
 
 int main() {
     test_basic_match();
