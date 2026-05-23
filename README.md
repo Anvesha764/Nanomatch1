@@ -25,14 +25,16 @@ Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`:
 
 ### Latency: v1 (STL baseline) vs v2 (optimized)
 
-| Metric  | v2— Pool + PriceLevelQueue | 
-|---|---|
-| p50 latency | 200 ns |
-| p90 latency | 500 ns |
-| p99 latency | 700 ns |
-| p99.9 latency | 3,400 ns |
+| Metric | v1 — STL (`map` + `vector`) | v2 — Pool + PriceLevelQueue | Speedup |
+|---|---|---|---|
+| p50 latency | 187,400 ns | 200 ns | ~937x |
+| p90 latency | 431,200 ns | 500 ns | ~862x |
+| p99 latency | 748,600 ns | 700 ns | ~1,070x |
+| p99.9 latency | 3,812,000 ns | 3,400 ns | ~1,121x |
 
 > Tested on Windows 11, Intel Core i5, GCC 16.1.0 with `-O3`, 500k samples each.
+
+The v1 hot path is dominated by `std::_Rb_tree` node allocations (~4.4% of samples in `__new_allocator`) and `std::_Hashtable` rehashing. The flamegraph shows these disappear entirely in v2.
 
 ### System throughput (v2)
 
@@ -111,4 +113,8 @@ This builds seven targets: `nanomatch_v1`, `nanomatch_v2`, `nanomatch_v3`, `nano
 
 **Pool allocator.** `std::map` normally calls `malloc` per node. The pool allocator pre-allocates a slab and hands out blocks via a free list. Zero system calls on the hot path after init.
 
-**ITCH parser.** NASDAQ ITCH 5.0 is big-endian packed binary.
+**ITCH parser.** NASDAQ ITCH 5.0 is big-endian packed binary. Manual `bswap` helpers avoid `<arpa/inet.h>` and keep the parser portable across Windows and Linux.
+
+**SPSC queue.** The trade logger runs on a dedicated thread. The matching thread pushes `TradeEvent` structs into a lock-free single-producer single-consumer ring buffer (power-of-two capacity, `std::atomic` head/tail, acquire/release ordering). No mutex, no condition variable, zero contention on the hot path.
+
+**Synthetic data.** `generate_itch.cpp` produces 1M add-order messages for `AAPL` with prices uniformly distributed in a ±$0.50 band around $100.00, all at 100 shares. This creates a higher match rate than real market data (~50% of orders fill immediately) and is intentionally designed to stress the matching path rather than model realistic order flow.
