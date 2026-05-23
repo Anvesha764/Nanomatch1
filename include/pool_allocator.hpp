@@ -31,12 +31,17 @@ public:
     }
 
     void deallocate(T* ptr, std::size_t n) noexcept {
-        if (n != 1) { ::operator delete(ptr); return; }
-        Block* block = reinterpret_cast<Block*>(ptr);
+    if (n != 1) { ::operator delete(ptr); return; }
+    // Check if ptr is inside our pool slab before returning to free list
+    Block* block = reinterpret_cast<Block*>(ptr);
+    if (block >= &blocks_[0] && block < &blocks_[PoolSize]) {
         block->next = free_head_;
         free_head_ = block;
         --alloc_count_;
+    } else {
+        ::operator delete(ptr);  // was an overflow allocation
     }
+}
 
     std::size_t allocated_count() const { return alloc_count_; }
 
