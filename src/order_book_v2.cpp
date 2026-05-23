@@ -1,6 +1,11 @@
 #include "order_book_v2.hpp"
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+
+// ---------------------------------------------------------------------------
+// add_order
+// ---------------------------------------------------------------------------
 
 std::vector<Trade> OrderBook_v2::add_order(Order order) {
     auto trades = match(order);
@@ -11,35 +16,49 @@ std::vector<Trade> OrderBook_v2::add_order(Order order) {
         } else {
             asks_[order.price].push_back(order);
         }
-        order_index_[order.id] = {order.side, order.price};
+        order_index_.insert(order.id, {order.side, order.price});
     }
     return trades;
 }
 
+// ---------------------------------------------------------------------------
+// match  (price-time priority)
+//
+// For a BUY  incoming order: sweep asks_ from slot 0 (lowest ask) upward
+//            while ask_price <= incoming_price.
+// For a SELL incoming order: sweep bids_ from slot 0 (highest bid) upward
+//            while bid_price >= incoming_price.
+//
+// "slot 0 is always best price" is guaranteed by PriceLevelArray's sorted
+// layout, so we never need an iterator — just keep looking at [0] until it
+// no longer crosses or the book empties.
+// ---------------------------------------------------------------------------
+
 std::vector<Trade> OrderBook_v2::match(Order& incoming) {
     std::vector<Trade> trades;
 
-    auto do_match = [&]<typename BookType>(BookType& book) {
+    // Generic lambda works for both BidBook and AskBook since they expose
+    // the same interface.
+    auto do_match = [&](auto& book, bool buy_side) {
         while (incoming.remaining() > 0 && !book.empty()) {
-            auto it = book.begin();
-            Price level_price = it->first;
+            auto& slot        = book.front();         // best price level
+            Price level_price = slot.price;
 
-            bool crosses = (incoming.side == Side::BUY)
-                ? incoming.price >= level_price
-                : level_price >= incoming.price;
-
+            // Check crossing condition
+            bool crosses = buy_side ? (incoming.price >= level_price)
+                                    : (level_price    >= incoming.price);
             if (!crosses) break;
 
-            PriceLevel& level = it->second;
+            PriceLevel& level = slot.queue;
 
             while (incoming.remaining() > 0 && !level.empty()) {
-                Order& resting = level.front();
+                Order& resting   = level.front();
                 Quantity fill_qty = std::min(incoming.remaining(),
                                              resting.remaining());
 
                 trades.push_back({
-                    (incoming.side == Side::BUY) ? incoming.id : resting.id,
-                    (incoming.side == Side::BUY) ? resting.id  : incoming.id,
+                    buy_side ? incoming.id : resting.id,
+                    buy_side ? resting.id  : incoming.id,
                     level_price,
                     fill_qty
                 });
@@ -52,79 +71,92 @@ std::vector<Trade> OrderBook_v2::match(Order& incoming) {
                     level.pop_front();
                 }
             }
-            if (level.empty()) book.erase(it);
+
+            if (level.empty())
+                book.erase(level_price);
         }
     };
 
     if (incoming.side == Side::BUY)
-        do_match(asks_);
+        do_match(asks_, /*buy_side=*/true);
     else
-        do_match(bids_);
+        do_match(bids_, /*buy_side=*/false);
 
     return trades;
 }
 
-bool OrderBook_v2::cancel_order(OrderId id) {
-    auto it = order_index_.find(id);
-    if (it == order_index_.end()) return false;
+// ---------------------------------------------------------------------------
+// cancel_order
+// ---------------------------------------------------------------------------
 
-    auto [side, price] = it->second;
+bool OrderBook_v2::cancel_order(OrderId id) {
+    IndexValue* entry = order_index_.find(id);
+    if (!entry) return false;
+
+    auto [side, price] = *entry;
 
     if (side == Side::BUY) {
-        auto level_it = bids_.find(price);
-        if (level_it != bids_.end()) {
-            level_it->second.remove(id);
-            if (level_it->second.empty()) bids_.erase(level_it);
+        PriceLevel* lvl = bids_.find(price);
+        if (lvl) {
+            lvl->remove(id);
+            if (lvl->empty()) bids_.erase(price);
         }
     } else {
-        auto level_it = asks_.find(price);
-        if (level_it != asks_.end()) {
-            level_it->second.remove(id);
-            if (level_it->second.empty()) asks_.erase(level_it);
+        PriceLevel* lvl = asks_.find(price);
+        if (lvl) {
+            lvl->remove(id);
+            if (lvl->empty()) asks_.erase(price);
         }
     }
 
-    order_index_.erase(it);
+    order_index_.erase(id);
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// print_book
+// ---------------------------------------------------------------------------
+
 void OrderBook_v2::print_book(int depth) const {
-    std::cout << "\n=== ORDER BOOK v2 (Pool + PriceLevelQueue) ===\n";
+    std::cout << "\n=== ORDER BOOK v2 (FlatArray + FlatHash) ===\n";
     std::cout << std::setw(10) << "ASK QTY"
               << " | " << std::setw(8) << "PRICE"
               << " | " << "BID QTY\n";
     std::cout << std::string(45, '-') << "\n";
 
-    int i = 0;
-    std::vector<std::pair<Price, Quantity>> ask_levels;
-    for (auto& [px, lvl] : asks_) {
+    // Collect ask levels (ascending), then print them top-down (reversed)
+    // Build a small stack so we can print highest ask first
+    struct LevelSnap { Price px; Quantity qty; };
+    LevelSnap ask_snap[256];
+    int snap_sz = 0;
+    for (auto& slot : asks_) {
+        if (snap_sz >= depth) break;
         Quantity total = 0;
-        PriceLevel tmp = lvl;          // copy so we can iterate
+        PriceLevel tmp = slot.queue;          // copy to iterate
         while (!tmp.empty()) {
             total += tmp.front().remaining();
             tmp.pop_front();
         }
-        ask_levels.push_back({px, total});
-        if (++i >= depth) break;
+        ask_snap[snap_sz++] = {slot.price, total};
     }
-    for (auto it = ask_levels.rbegin(); it != ask_levels.rend(); ++it)
-        std::cout << std::setw(10) << it->second
-                  << " | " << std::setw(8) << it->first << " |\n";
+    for (int i = snap_sz - 1; i >= 0; --i)
+        std::cout << std::setw(10) << ask_snap[i].qty
+                  << " | " << std::setw(8) << ask_snap[i].px << " |\n";
 
     std::cout << std::string(45, '-') << "\n";
 
-   i = 0;
-    for (auto& [px, lvl] : bids_) {
+    int n = 0;
+    for (auto& slot : bids_) {
+        if (n++ >= depth) break;
         Quantity total = 0;
-        PriceLevel tmp = lvl;
+        PriceLevel tmp = slot.queue;
         while (!tmp.empty()) {
             total += tmp.front().remaining();
             tmp.pop_front();
         }
         std::cout << std::setw(10) << ""
-                  << " | " << std::setw(8) << px
+                  << " | " << std::setw(8) << slot.price
                   << " | " << total << "\n";
-        if (++i >= depth) break;
     }
     std::cout << std::string(45, '=') << "\n";
 }
